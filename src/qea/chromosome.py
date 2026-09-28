@@ -8,8 +8,9 @@ resuelvan exactamente el mismo problema con las mismas restricciones.
 """
 
 import random as rd
-import numpy as np
+
 import networkx as nx
+import numpy as np
 
 
 class Chromosome:   # Class For Creating Topologies for MAS-based Architectures
@@ -41,13 +42,12 @@ class Chromosome:   # Class For Creating Topologies for MAS-based Architectures
             if i < (self._num_agents-1):
                 self._genes.append(1)
                 self._golden_genes.append(1)
+            elif rd.random() >= 0.5:
+                self._genes.append(1)
+                self._golden_genes.append(0)
             else:
-                if rd.random() >= 0.5:
-                    self._genes.append(1)
-                    self._golden_genes.append(0)
-                else:
-                    self._genes.append(0)
-                    self._golden_genes.append(0)
+                self._genes.append(0)
+                self._golden_genes.append(0)
             i += 1
 
     def is_coordinator(self, node):

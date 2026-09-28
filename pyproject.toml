@@ -1,0 +1,91 @@
+[project]
+name = "qea"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Jonathan D. Fuentes Calvo", email = "" },
+    { name = "Dr. Ing. Johan Carvajal Godínez", email = "" },
+    { name = "Christian Asch", email = "christian.asch4@outlook.com" },
+]
+requires-python = ">=3.13"
+dependencies = [
+    "matplotlib>=3.11.1",
+    "networkx>=3.6.1",
+    "numpy>=2.5.2",
+    "qiskit>=2.5.2",
+    "qiskit-aer>=0.17.2",
+    "scipy>=1.18.1",
+]
+
+[project.scripts]
+qea = "qea:main"
+
+[build-system]
+requires = ["uv_build>=0.12.9,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = ["ruff>=0.16.5", "ty>=0.0.77"]
+
+[tool.ruff]
+line-length = 88
+indent-width = 4
+fix = true
+
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = 'lf'
+
+
+[tool.ruff.lint]
+ignore = []
+select = [
+    'ERA',
+    'YTT',
+    'ANN',
+    'S',
+    'BLE',
+    'FBT',
+    'B',
+    'A',
+    'COM',
+    'C4',
+    'EM',
+    'INT',
+    'ISC',
+    'ICN',
+    'INP',
+    'PIE',
+    'PYI',
+    'Q',
+    'RSE',
+    'RET',
+    'SLF',
+    'SIM',
+    'TID',
+    'TC',
+    'ARG',
+    'PTH',
+    'FLY',
+    'I',
+    'C90',
+    'NPY',
+    'PD',
+    'N',
+    'PERF',
+    'E',
+    'W',
+    'F',
+    'PLC',
+    'PLE',
+    'PLR',
+    'PLW',
+    'UP',
+    'FURB',
+    'RUF',
+    'TRY',
+]
