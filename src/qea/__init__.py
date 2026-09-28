@@ -57,6 +57,7 @@ def main() -> None:
     print(f"\n  Genes totales   : {evaluator.n_genes}")
     print(f"  Genes protegidos: {len(evaluator.get_protected_indices())}")
     print(f"  Genes libres    : {len(evaluator.get_free_indices())}")
+    print(f"  Equipos entrelazados: {len(evaluator.get_team_gene_groups())}")
 
     # ── Ejecutar QEA ───────────────────────────────────────────────────
     print("\n[1/4] Ejecutando QEA...")
@@ -95,6 +96,10 @@ def main() -> None:
         f"  Genes protegidos : {len(evaluator.get_protected_indices())}  "
         f"← respetados por QEA y GA",
     )
+    entanglement = (
+        f"ON ({config.entanglement_gate})" if config.enable_entanglement else "OFF"
+    )
+    print(f"  Entrelazamiento  : {entanglement}  ← solo aplicado en QEA")
     print(
         f"  Wilcoxon p-valor : {stats['p_value']:.4f}  "
         f"({'significativo' if stats['significant'] else 'no significativo'})",

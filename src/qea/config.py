@@ -12,6 +12,7 @@ class ConfigError(Exception): ...
 
 SCENARIOS = ("nominal", "safe", "critical")
 ROTATION_SCHEMES = ("I", "II", "III")
+ENTANGLEMENT_GATES = ("RXX", "RZZ", "BOTH")
 
 # El cruce del GA parte el cromosoma en rng.integers(1, n_genes), que exige
 # n_genes >= 2, y n_genes = n(n-1)/2, así que hacen falta 3 agentes.
@@ -135,6 +136,11 @@ class ExperimentConfig:
     # Método de simulación de AerSimulator; solo se valida y se usa si
     # use_qiskit. "automatic" deja que Aer elija según el circuito.
     aer_method: str = "automatic"
+    # Entrelazamiento RXX/RZZ entre genes del mismo equipo. Solo actúa con
+    # use_qiskit: el muestreo clásico observa cada qubit por separado.
+    enable_entanglement: bool = True
+    entanglement_strength: float = 0.15 * np.pi  # theta de RXX/RZZ
+    entanglement_gate: str = "RXX"
     # GA
     pop_size: int = 30
     mutation_rate: float = 0.02
@@ -168,6 +174,9 @@ class ExperimentConfig:
         _check_bool("use_qiskit", self.use_qiskit)
         if self.use_qiskit:
             _check_choice("aer_method", self.aer_method, _aer_methods())
+        _check_bool("enable_entanglement", self.enable_entanglement)
+        _check_number("entanglement_strength", self.entanglement_strength, 0.0)
+        _check_choice("entanglement_gate", self.entanglement_gate, ENTANGLEMENT_GATES)
 
         # GA
         _check_int("pop_size", self.pop_size, MIN_POP_SIZE)

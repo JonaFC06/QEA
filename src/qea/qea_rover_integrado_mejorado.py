@@ -138,6 +138,27 @@ class ChromosomeEvaluator:
         """Índices de genes sobre los que operan los algoritmos."""
         return np.where(self.golden_mask == 0)[0]
 
+    def _edge_index(self, i: int, j: int) -> int:
+        """Gen de la arista (i, j), 0-indexada, en el orden de np.triu_indices."""
+        i, j = min(i, j), max(i, j)
+        return i * (2 * self.n_agents - i - 1) // 2 + (j - i - 1)
+
+    def get_team_gene_groups(self) -> list[tuple[int, list[int]]]:
+        """Genes que el QEA entrelaza, uno por equipo de ``constraints``.
+
+        Cada equipo [lider, m1, m2, ...] (nodos 1-indexados) produce
+        (gen líder-m1, [gen líder-m2, gen líder-m3, ...]): el primer enlace
+        del equipo es el ancla que se entrelaza con los demás. Un equipo con
+        un solo miembro no tiene con qué correlacionarse y no aparece.
+        """
+        groups = []
+        for team in self.constraints:
+            leader, *members = (node - 1 for node in team)
+            anchor, *rest = (self._edge_index(leader, m) for m in members)
+            if rest:
+                groups.append((anchor, rest))
+        return groups
+
 
 # =============================================================================
 # 2. RESULTADO ESTÁNDAR
@@ -277,10 +298,30 @@ class QiskitObserver:
     `method` es el método de simulación de AerSimulator ("automatic",
     "statevector", "matrix_product_state", ...); ExperimentConfig lo valida
     contra los métodos que admite la versión de qiskit-aer instalada.
+
+    Entre la preparación RY y la medición se entrelaza el gen ancla de cada
+    equipo con los de sus demás miembros (``team_groups``). Se usan RXX/RZZ
+    y no CX porque son simétricas y paramétricas: el líder influye en el
+    miembro con una correlación graduada por theta, sin el control
+    determinista de un CNOT. RZZ por sí sola solo cambia fases relativas y no
+    altera las probabilidades de medición del circuito actual.
+
+    Las compuertas conectan genes lejanos en el registro (p. ej. aristas 1-2
+    y 1-8), un entrelazamiento de largo alcance que resta a
+    "matrix_product_state" su ventaja sobre "statevector".
     """
 
-    def __init__(self, method: str = "automatic") -> None:
+    def __init__(
+        self,
+        method: str = "automatic",
+        team_groups: list[tuple[int, list[int]]] | None = None,
+        entanglement_strength: float = 0.15 * np.pi,
+        entanglement_gate: str = "RXX",
+    ) -> None:
         self.simulator = AerSimulator(method=method)
+        self.team_groups = team_groups or []
+        self.entanglement_strength = entanglement_strength
+        self.entanglement_gate = entanglement_gate
 
     def observe(self, chromosome: QuantumChromosome) -> np.ndarray:
         n = chromosome.n_genes
@@ -290,6 +331,13 @@ class QiskitObserver:
         for i, (alpha, _) in enumerate(chromosome.amplitudes):
             angle = 2.0 * np.arccos(np.clip(alpha, -1.0, 1.0))
             qc.ry(angle, qr[i])
+        theta = self.entanglement_strength
+        for anchor, members in self.team_groups:
+            for member in members:
+                if self.entanglement_gate in ("RXX", "BOTH"):
+                    qc.rxx(theta, qr[anchor], qr[member])
+                if self.entanglement_gate in ("RZZ", "BOTH"):
+                    qc.rzz(theta, qr[anchor], qr[member])
         qc.measure(qr, cr)
         counts = self.simulator.run(qc, shots=1).result().get_counts(qc)
         measured = max(counts, key=counts.get)
@@ -317,7 +365,14 @@ class QEA:
         self.n_genes = evaluator.n_genes
         self.rng = np.random.default_rng(cfg.seed)
         if cfg.use_qiskit:
-            self.observer = QiskitObserver(cfg.aer_method)
+            self.observer = QiskitObserver(
+                cfg.aer_method,
+                team_groups=(
+                    evaluator.get_team_gene_groups() if cfg.enable_entanglement else []
+                ),
+                entanglement_strength=cfg.entanglement_strength,
+                entanglement_gate=cfg.entanglement_gate,
+            )
 
     def _observe(self, chromosome: QuantumChromosome) -> np.ndarray:
         if self.cfg.use_qiskit:
@@ -356,6 +411,15 @@ class QEA:
             )
             print(
                 f"  Escenario: {cfg.scenario.upper()} | θ₀={cfg.theta_initial / np.pi:.4f}π",
+            )
+            entanglement = (
+                f"ON ({cfg.entanglement_gate})" if cfg.enable_entanglement else "OFF"
+            )
+            n_teams = len(self.evaluator.get_team_gene_groups())
+            print(
+                f"  Entrelazamiento: {entanglement}"
+                f" | θ_entrelazamiento={cfg.entanglement_strength / np.pi:.4f}π"
+                f" | equipos entrelazados: {n_teams}",
             )
             print(f"{'=' * 62}")
             print(

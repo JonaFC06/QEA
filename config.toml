@@ -29,6 +29,12 @@ use_qiskit = true                     # false -> observacion clasica (mucho mas 
 # "automatic" deja que Aer elija segun el circuito.
 aer_method = "automatic"
 
+# Entrelazamiento entre los genes lider-miembro de cada equipo de
+# `constraints` (solo con use_qiskit = true; sin equipos no hace nada).
+enable_entanglement = true
+entanglement_strength = 0.47123889803846897  # 0.15 * pi rad; >= 0 (0.5 * pi = correlacion maxima)
+entanglement_gate = "RXX"                     # "RXX" | "RZZ" | "BOTH"
+
 # ── GA ───────────────────────────────────────────────────────────────────
 pop_size = 30               # >= 3 (el torneo toma 3 individuos)
 mutation_rate = 0.02        # 0.0 .. 1.0

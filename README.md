@@ -47,6 +47,7 @@ La CLI no solicita entrada interactiva. `-c` acepta una ruta TOML; sin ella se u
 |---|---|
 | Problema | `n_agents` (mínimo 3), `scenario` (`nominal`, `safe`, `critical`), `max_generations` (mínimo 1), `seed` (entero no negativo), `constraints` |
 | QEA | `theta_initial`, `theta_min`, `decay_rate`, `rotation_scheme` (`I`, `II`, `III`), `use_qiskit`, `aer_method` |
+| Entrelazamiento (QEA) | `enable_entanglement`, `entanglement_strength` (radianes, >= 0), `entanglement_gate` (`RXX`, `RZZ`, `BOTH`) |
 | GA | `pop_size` (mínimo 3), `mutation_rate` y `crossover_rate` (entre 0 y 1) |
 | Estadística | `n_replicas` (mínimo 2) |
 
@@ -158,11 +159,16 @@ Dos fuentes los generan:
 
 El ángulo decae exponencialmente (GDAA): `θ(g) = max(θ₀·e^(−λg), θ_min)`.
 
+### Entrelazamiento entre genes de equipo
+
+Con `use_qiskit = true` y `enable_entanglement = true`, el circuito de observación aplica, después de las rotaciones RY y antes de medir, compuertas `RXX` y/o `RZZ` de ángulo `entanglement_strength` entre el enlace líder-primer miembro de cada equipo de `constraints` y los enlaces líder-miembro restantes. Se prefieren a CX porque son simétricas y paramétricas: el líder influye sin determinar. El GA no cambia. En modo clásico, incluidas las réplicas estadísticas, no hay efecto.
+
 ---
 
 ## Notas y limitaciones conocidas
 
 - **`use_qiskit=True` es lento.** Construye y mide un circuito de `n(n-1)/2` qubits por generación, con 1 shot cada vez. Para `n > 15` el script recomienda automáticamente el modo clásico; el análisis estadístico siempre lo fuerza a `False`.
+- **El entrelazamiento actual no altera los resultados.** `set_constraint_org_team()` marca como protegidos justamente los enlaces líder-miembro que se entrelazan: sus qubits parten fijos en `|1>` y `enforce_golden()` los vuelve a 1 tras medir. Como las compuertas no tocan ningún qubit libre, la distribución de los cromosomas observados es idéntica con o sin entrelazamiento; solo cambia el costo de simular el circuito.
 - **`scenario` es solo una etiqueta.** Se imprime y aparece en los títulos de la figura, pero no altera la matriz de costos ni las restricciones.
 - **Métodos de coherencia no usados en el flujo principal.** `Chromosome.get_coherence()`, `test_degree_coord()`, `test_degree_funct()` y `get_fitness()` invocan `graph.degree().values()`, sintaxis de NetworkX 1.x que falla en NetworkX 2.0+. No afecta la ejecución porque `get_total_cost()` no depende del grafo, pero esos métodos no son utilizables tal cual con versiones modernas de NetworkX.
 - **La MCC se genera aleatoriamente** a partir de la semilla. Para usar costos reales de tu misión, sustituye `cost_matrix` por tu propia matriz simétrica en el uso programático.
