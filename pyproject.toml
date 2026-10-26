@@ -4,8 +4,8 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 authors = [
-    { name = "Jonathan D. Fuentes Calvo", email = "" },
-    { name = "Dr. Ing. Johan Carvajal Godínez", email = "" },
+    { name = "Jonathan D. Fuentes Calvo", email = "jonfuentes@estudiantec.cr" },
+    { name = "Dr. Ing. Johan Carvajal Godínez", email = "johcarvajal@itcr.ac.cr" },
     { name = "Christian Asch", email = "christian.asch4@outlook.com" },
 ]
 requires-python = ">=3.13"
